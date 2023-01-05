@@ -1,0 +1,218 @@
+#include <bits/stdc++.h>
+using namespace std;
+string get_only_word(string str)
+{
+    // For Special characters....
+    while (str[str.size() - 1] >= 32 && str[str.size() - 1] <= 47 || (str[str.size() - 1] >= 58 && str[str.size() - 1] <= 64) || (str[str.size() - 1] >= 91 && str[str.length() - 1] <= 96) || (str[str.size() - 1] >= 123 && str[str.size() - 1] <= 126))
+        str = str.substr(0, str.length() - 1);
+    while (str[0] >= 32 && str[0] <= 47 || (str[0] >= 58 && str[0] <= 64) || (str[0] >= 91 && str[0] <= 96) || (str[0] >= 123 && str[0] <= 126))
+        str = str.substr(1, str.length());
+    for (int i = 0; i < str.size(); i++)
+        if (str[i] >= 'A' && str[i] <= 'Z')
+            str[i] += 32;
+    return str;
+}
+bool not_present(string str, vector<pair<int, string>> v)
+{
+    for (int i = 0; i < v.size(); i++)
+        if (str.compare(v[i].second) == 0)
+            return false;
+    return true;
+}
+void file_read(vector<pair<int, string>> &v)
+{
+    string str;
+    ifstream fin;
+    fin.open("data.txt");
+    if (!fin)
+    {
+        cout << "DD";
+        return;
+    }
+    char ch = fin.eof();
+    getline(fin, str, ch);
+    fin.close();
+    vector<string> words;
+    string s;
+    for (int i = 0; i < str.size(); i++)
+    {
+        s += str[i];
+        if (str[i] == ' ')
+        {
+            words.push_back(s);
+            s = "";
+        }
+    }
+    for (int i = 0; i < words.size(); i++)
+    {
+        words[i] = get_only_word(words[i]);
+    }
+    map<string, int> m;
+    for (int i = 0; i < words.size(); i++)
+    {
+        m[words[i]]++;
+    }
+    for (map<string, int>::iterator p = m.begin(); p != m.end(); ++p)
+    {
+        if (not_present(p->first, v))
+            v.push_back(make_pair(p->second, p->first));
+    }
+}
+struct node
+{
+    string word;
+    int freq;
+    node *next;
+    node()
+    {
+        this->word = "";
+        this->freq = 0;
+        this->next = nullptr;
+    }
+    node(string s)
+    {
+        this->freq = 0;
+        this->word = s;
+        this->next = nullptr;
+    }
+};
+class HashMap
+{
+    int size_of_map;
+    vector<node> words_array;
+    int capacity;
+    int get_hash_key(string str)
+    {
+        int s = 0;
+        for (int i = 0; i < str.size(); i++)
+            s += int(str[i]) - 48;
+        return (s % capacity);
+    }
+
+public:
+    HashMap(int capacity)
+    {
+        this->capacity = capacity;
+        this->size_of_map = 0;
+        words_array.reserve(capacity);
+        for (int i = 0; i < capacity; i++)
+        {
+            node n;
+            words_array.push_back(n);
+        }
+    }
+    void insert(int freq, string s)
+    {
+        int i = get_hash_key(s);
+        node *t = words_array[i].next;
+        if (t == nullptr)
+        {
+            node *n = new node(s);
+            n->freq = freq;
+            words_array[i].next = n;
+            return;
+        }
+        node *m = new node(s);
+        m->freq = freq;
+        m->next = t;
+        words_array[i].next = m;
+        return;
+    }
+    bool Remove(string s)
+    {
+        int k = get_hash_key(s);
+        node *t = &words_array[k];
+        if (t->next == nullptr)
+            return false;
+        else
+        {
+            node *m = nullptr;
+            while (t->next)
+            {
+                if (t->next->word.compare(s) == 0)
+                {
+                    m = t->next;
+                    break;
+                }
+                t = t->next;
+            }
+            t->next = t->next->next;
+            if (m)
+            {
+                cout << m->word << " deleted\n";
+                delete m;
+            }
+        }
+        return true;
+    }
+    bool Search(string s)
+    {
+        int k = get_hash_key(s);
+        node *t = words_array[k].next;
+        if (t == nullptr)
+            return false;
+        else
+        {
+            while (t)
+            {
+                if (t->word.compare(s) == 0 && t)
+                {
+                    cout << t->word << "  " << t->freq << endl;
+                    return true;
+                }
+                t = t->next;
+            }
+        }
+        return false;
+    }
+    void print()
+    {
+        for (int i = 0; i < this->capacity; i++)
+        {
+            node *t = words_array[i].next;
+            while (t != nullptr)
+            {
+                cout << t->word << "  " << t->freq << "  ";
+                t = t->next;
+            }
+        }
+        cout << endl
+             << endl;
+    }
+};
+int main()
+{
+    vector<pair<int, string>> v;
+    file_read(v);
+    HashMap *h = new HashMap(v.size());
+    for (int i = 0; i < v.size(); i++)
+    {
+        h->insert(v[i].first, v[i].second);
+    }
+    cout << "enter 1 For Search,- for Remove and 0 for Exit\n";
+    while (true)
+    {
+        char choice = ' ';
+        cout << "Enter Choice:-";
+        cin >> choice;
+        if (choice == '0')
+            break;
+        else if (choice == '1')
+        {
+            string s;
+            cout << "Enter word to Search:-\n";
+            cin >> s;
+            cout << "word with Frequency:-\n";
+            h->Search(s);
+        }
+        else if (choice == '-')
+        {
+            string s;
+            cin >> s;
+            h->Remove(s);
+        }
+        else
+            break;
+    }
+    cout << "Happy Coding!!!\n";
+}
